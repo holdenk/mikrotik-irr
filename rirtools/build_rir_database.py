@@ -207,9 +207,14 @@ INSERT INTO country_codes VALUES ('AP', 'non-iso3166:Asia-Pacific')""")
 
     def has_run_today(self):
         today = datetime.utcnow().strftime('%Y%m%d')
-        with open(self.lastfetch, 'r') as f:
-            last = f.read()[:-1]
-            f.close()
+        last = None
+        try:
+            with open(self.lastfetch, 'r') as f:
+                last = f.read()[:-1]
+                f.close()
+        except:
+            # Can't read the last fetch time YOLO
+            pass
         if today == last:
             return True
         return False
