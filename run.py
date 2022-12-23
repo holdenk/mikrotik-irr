@@ -3,6 +3,7 @@ import os
 import subprocess
 import irrhound.irrhound
 from typing import *
+import sys
 
 def main():
     with open("input_asns") as asn_file:
@@ -15,8 +16,36 @@ def main():
 
     input_rule = f" if ({combined_input})" + "{ accept; }"
     output_rule = f" if ({combined_output})" + "{ accept; }"
-    print(input_rule)
-    print(output_rule)
+    do_update(input_rule, output_rule)
+
+def do_update(input_rule, output_rule):
+    host = os.getenv("router")
+    host_port = os.getenv("router_port", "22")
+    cmd = "/routing/filter/rule/export"
+    current_rules_text = subprocess.check_output(
+        ["ssh", f"admin@{host}", "-p" , host_port, cmd]).decode('utf-8')
+    current_rules = current_rules_text.split("add chain=")
+    input_indexes = []
+    output_indexes = []
+    # There is a firt non-rule chunk of text so start at -1
+    c = -1
+    for rule in current_rules:
+        if "comment=input-rule" in rule:
+            input_indexes.append(str(c))
+        if "comment=output-rule" in rule:
+            output_indexes.append(str(c))
+        c = c + 1
+    print(f"Going to update input {input_indexes} and {output_indexes}")
+    output_numbers = ",".join(output_indexes)
+    cmd=f"/routing/filter/rule/set rule=\"{output_rule}\" numbers={output_numbers}"
+    subprocess.check_output(
+        ["ssh", f"admin@{host}", "-p" , host_port, cmd]).decode('utf-8')
+    input_numbers = ",".join(input_indexes)
+    cmd=f"/routing/filter/rule/set rule=\"{input_rule}\" numbers={input_numbers}"
+    subprocess.check_output(
+        ["ssh", f"admin@{host}", "-p" , host_port, cmd]).decode('utf-8')
+
+
 
 def process_input_line(line):
     line = line.rstrip()
