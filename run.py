@@ -8,9 +8,15 @@ def main():
     with open("input_asns") as asn_file:
         input_rule_segments = map(process_input_line, asn_file)
         combined_input = " or ".join(input_rule_segments)
+        
     with open("output_asns") as asn_file:
         output_rule_segments = map(process_output_line, asn_file)
         combined_output = " or ".join(output_rule_segments)
+
+    input_rule = f" if ({combined_input})" + "{ accept; }"
+    output_rule = f" if ({combined_output})" + "{ accept; }"
+    print(input_rule)
+    print(output_rule)
 
 def process_input_line(line):
     line = line.rstrip()
